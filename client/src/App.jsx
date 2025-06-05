@@ -10,6 +10,11 @@ import { useEffect, useState } from "react";
 export default function App() {
   const [message, setMessage] = useState("");
 
+  const fetchAPI = async () => {
+    const response = await axios.get("http://127.0.0.1:5000/api/hello");
+    console.log(response.data.massage);
+  };
+
   useEffect(() => {
     fetch("http://localhost:5000/api/hello")
       .then((res) => res.json())
