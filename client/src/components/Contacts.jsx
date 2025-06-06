@@ -1,4 +1,3 @@
-// src/components/ContactUs.jsx
 import React, { useState } from 'react';
 import {
   Box,
@@ -9,11 +8,8 @@ import {
   Stack,
   TextField,
   Button,
-  Fade,
-  FormControl,
-  InputLabel,
-  Select,
   MenuItem,
+  Fade,
 } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import Footer from './Footer';
@@ -21,8 +17,8 @@ import Footer from './Footer';
 const services = [
   'SMM-просування',
   'Розробка контенту',
-  'Веб-розробка (лендінги, сайти)',
-  'Інше...',
+  'Веб-розробка (створення сайтів)',
+  'інше',
 ];
 
 export default function ContactUs() {
@@ -33,14 +29,64 @@ export default function ContactUs() {
     service: '',
   });
 
-  // Визначаємо, які поля показувати
-  const showPhone = formData.name.length > 0;
-  const showEmail = showPhone && formData.phone.length > 0;
-  const showService = showEmail && formData.email.length > 0;
+  const [showPhone, setShowPhone] = useState(false);
+  const [showEmail, setShowEmail] = useState(false);
+  const [showService, setShowService] = useState(false);
+
+  const [sending, setSending] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const handleChange = (field) => (e) => {
+    const value = e.target.value;
+    setFormData((prev) => ({ ...prev, [field]: value }));
+
+    if (field === 'name' && value.trim() !== '') setShowPhone(true);
+    if (field === 'phone' && value.trim() !== '') setShowEmail(true);
+    if (field === 'email' && value.trim() !== '') setShowService(true);
+  };
+
+  const handleSubmit = async () => {
+    setSending(true);
+    setSuccessMsg('');
+    setErrorMsg('');
+
+    try {
+      const response = await fetch('http://localhost:5000/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSuccessMsg(data.message || 'Форма відправлена!');
+        setFormData({ name: '', phone: '', email: '', service: '' });
+        setShowPhone(false);
+        setShowEmail(false);
+        setShowService(false);
+      } else {
+        setErrorMsg('Сталася помилка, спробуйте пізніше.');
+      }
+    } catch {
+      setErrorMsg('Не вдалося зв’язатися із сервером.');
+    } finally {
+      setSending(false);
+    }
+  };
 
   return (
-    <Box sx={{ bgcolor: '#000', color: '#fff', fontFamily: 'Arial, sans-serif', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Хедер */}
+    <Box
+      sx={{
+        bgcolor: '#000',
+        color: '#fff',
+        fontFamily: 'Arial, sans-serif',
+        minHeight: '100vh', // мінімальна висота 100% вікна
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      {/* Header */}
       <AppBar
         position="static"
         elevation={0}
@@ -48,6 +94,7 @@ export default function ContactUs() {
           background: 'linear-gradient(to bottom, #074177 0%, #000 100%)',
           px: { xs: 2, md: 5 },
           py: 2,
+          flexShrink: 0, // щоб header не стискався
         }}
       >
         <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -56,7 +103,7 @@ export default function ContactUs() {
               component={RouterLink}
               to="/"
               underline="none"
-              sx={{ display: 'flex', alignItems: 'center', color: '#fff' }}
+              sx={{ display: 'flex', alignItems: 'center' }}
             >
               <Box component="span" sx={{ color: '#07001C' }}>
                 Smm
@@ -92,147 +139,142 @@ export default function ContactUs() {
         </Toolbar>
       </AppBar>
 
-      {/* Форма */}
+      {/* Основний контент - форма */}
       <Box
         component="section"
         sx={{
-          flexGrow: 1,
-          px: { xs: 2, md: 5 },
-          py: { xs: 8, md: 12 },
-          maxWidth: 600,
+          maxWidth: 500,
           mx: 'auto',
-          textAlign: 'left',
+          py: 8,
+          px: 3,
+          flexGrow: 1, // займає весь вільний простір
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 4,
+          color: '#fff',
         }}
       >
         <Typography
           component="h1"
-          sx={{
-            fontSize: { xs: '2.5rem', md: '3rem' },
-            fontWeight: 300,
-            mb: 4,
-            lineHeight: 1.2,
-          }}
+          sx={{ fontSize: { xs: '2.5rem', md: '3rem' }, fontWeight: 300, mb: 2 }}
         >
-          Залиште заявку
+          Замовити послугу
         </Typography>
 
-        {/* Ім'я */}
-        <Fade in={true} timeout={500}>
-          <TextField
-            label="Ім'я"
-            variant="outlined"
-            fullWidth
-            required
-            value={formData.name}
-            onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-            sx={{ mb: 4, input: { color: '#fff' }, label: { color: '#ccc' }, fieldset: { borderColor: '#555' } }}
-            InputLabelProps={{ style: { color: '#ccc' } }}
-            InputProps={{ style: { color: '#fff' } }}
-          />
-        </Fade>
+        <TextField
+          variant="filled"
+          label="Ім'я"
+          value={formData.name}
+          onChange={handleChange('name')}
+          fullWidth
+          InputLabelProps={{ sx: { color: '#bbb' } }}
+          sx={{
+            input: { color: '#fff' },
+            backgroundColor: '#074177',
+            borderRadius: 1,
+          }}
+        />
 
-        {/* Телефон */}
-        <Fade in={showPhone} timeout={700} unmountOnExit>
+        <Fade in={showPhone} timeout={800} unmountOnExit>
           <TextField
+            variant="filled"
             label="Номер телефону"
-            variant="outlined"
-            fullWidth
-            required
             value={formData.phone}
-            onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
-            sx={{ mb: 4, input: { color: '#fff' }, label: { color: '#ccc' }, fieldset: { borderColor: '#555' } }}
-            InputLabelProps={{ style: { color: '#ccc' } }}
-            InputProps={{ style: { color: '#fff' } }}
+            onChange={handleChange('phone')}
+            fullWidth
+            InputLabelProps={{ sx: { color: '#bbb' } }}
+            sx={{
+              input: { color: '#fff' },
+              backgroundColor: '#074177',
+              borderRadius: 1,
+            }}
           />
         </Fade>
 
-        {/* Email */}
-        <Fade in={showEmail} timeout={900} unmountOnExit>
+        <Fade in={showEmail} timeout={1100} unmountOnExit>
           <TextField
+            variant="filled"
             label="Email"
             type="email"
-            variant="outlined"
-            fullWidth
-            required
             value={formData.email}
-            onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
-            sx={{ mb: 4, input: { color: '#fff' }, label: { color: '#ccc' }, fieldset: { borderColor: '#555' } }}
-            InputLabelProps={{ style: { color: '#ccc' } }}
-            InputProps={{ style: { color: '#fff' } }}
+            onChange={handleChange('email')}
+            fullWidth
+            InputLabelProps={{ sx: { color: '#bbb' } }}
+            sx={{
+              input: { color: '#fff' },
+              backgroundColor: '#074177',
+              borderRadius: 1,
+            }}
           />
         </Fade>
 
-        {/* Вибір послуги */}
-        <Fade in={showService} timeout={1100} unmountOnExit>
-          <FormControl fullWidth variant="outlined" required sx={{ mb: 4 }}>
-            <InputLabel sx={{ color: '#ccc' }}>Оберіть послугу</InputLabel>
-            <Select
-              value={formData.service}
-              label="Оберіть послугу"
-              onChange={(e) => setFormData((prev) => ({ ...prev, service: e.target.value }))}
-              sx={{
-                color: '#fff',
-                backgroundColor: '#001f4d',
-                borderRadius: 1,
-                '.MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#555',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#1976d2',
-                },
-                '.MuiSvgIcon-root': {
-                  color: '#ccc',
-                },
-              }}
-              MenuProps={{
-                PaperProps: {
-                  sx: {
-                    backgroundColor: '#001f4d',
-                    color: '#fff',
-                  },
-                },
-              }}
-            >
-              {services.map((service) => (
-                <MenuItem
-                  key={service}
-                  value={service}
-                  sx={{
-                    '&.Mui-selected': {
-                      backgroundColor: '#003080',
-                    },
-                    '&.Mui-selected:hover': {
-                      backgroundColor: '#0040b3',
-                    },
-                    '&:hover': {
-                      backgroundColor: '#002060',
-                    },
-                  }}
-                >
-                  {service}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+        <Fade in={showService} timeout={1400} unmountOnExit>
+          <TextField
+            select
+            label="Оберіть послугу"
+            value={formData.service}
+            onChange={handleChange('service')}
+            fullWidth
+            InputLabelProps={{ sx: { color: '#bbb' } }}
+            sx={{
+              input: { color: '#fff' },
+              backgroundColor: '#074177',
+              borderRadius: 1,
+              '& .MuiSelect-select': { color: '#fff' },
+              '& .MuiOutlinedInput-notchedOutline': { borderColor: 'transparent' },
+            }}
+          >
+            {services.map((option) => (
+              <MenuItem
+                key={option}
+                value={option}
+                sx={{
+                  backgroundColor: '#074177',
+                  color: '#fff',
+                  '&.Mui-selected': { backgroundColor: '#052e57' },
+                  '&:hover': { backgroundColor: '#052e57' },
+                }}
+              >
+                {option}
+              </MenuItem>
+            ))}
+          </TextField>
         </Fade>
 
-        {/* Кнопка відправки */}
-        <Fade in={showService} timeout={1300} unmountOnExit>
+        <Fade in={showService} timeout={1400} unmountOnExit>
           <Button
             variant="contained"
             size="large"
             sx={{ backgroundColor: '#074177', color: '#fff' }}
-            onClick={() => alert('Форма відправлена!')}
-            disabled={!formData.name || !formData.phone || !formData.email || !formData.service}
-            fullWidth
+            onClick={handleSubmit}
+            disabled={
+              sending ||
+              !formData.name ||
+              !formData.phone ||
+              !formData.email ||
+              !formData.service
+            }
           >
-            Відправити
+            {sending ? 'Відправка...' : 'Відправити'}
           </Button>
         </Fade>
+
+        {successMsg && (
+          <Typography color="success.main" sx={{ mt: 2 }}>
+            {successMsg}
+          </Typography>
+        )}
+        {errorMsg && (
+          <Typography color="error.main" sx={{ mt: 2 }}>
+            {errorMsg}
+          </Typography>
+        )}
       </Box>
 
-      {/* Футер */}
-      <Footer />
+      {/* Footer */}
+      <Box sx={{ flexShrink: 0 }}>
+        <Footer />
+      </Box>
     </Box>
   );
 }
