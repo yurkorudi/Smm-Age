@@ -122,6 +122,8 @@ export default function OurServices() {
                   <Button
                     size="small"
                     sx={{ color: '#1e3a8a', textTransform: 'none', fontWeight: 'bold', fontSize: 12, p: 0 }}
+                    component={RouterLink}
+                    to="/contacts"
                   >
                     дізнатись більше<ArrowRightIcon sx={{ fontSize: 16, ml: 0.5 }} />
                   </Button>
@@ -185,6 +187,8 @@ export default function OurServices() {
                   <Button
                     size="small"
                     sx={{ color: '#1e3a8a', textTransform: 'none', fontWeight: 'bold', fontSize: 12, p: 0 }}
+                    component={RouterLink}
+                    to="/contacts"
                   >
                     дізнатись більше<ArrowRightIcon sx={{ fontSize: 16, ml: 0.5 }} />
                   </Button>
