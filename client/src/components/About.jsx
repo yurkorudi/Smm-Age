@@ -15,8 +15,11 @@ import {
 import { Link as RouterLink } from 'react-router-dom';
 import Footer from './Footer';
 
+
+
 export default function About() {
   return (
+    
     <Box sx={{ bgcolor: '#000', color: '#fff', fontFamily: 'Arial, sans-serif' }}>
       {/* ===== Навігаційний AppBar (той самий, що у MainPage) ===== */}
       <AppBar
@@ -98,7 +101,7 @@ export default function About() {
           }}
         >
           <Box component="span" sx={{ fontWeight: 700 }}>
-            SmmAge
+            
           </Box>{' '}
           — це інструмент для вашого бізнесу. Ми займаємося медійним розвитком, просуванням у соцмережах та надаємо комплексні послуги:
         </Typography>
