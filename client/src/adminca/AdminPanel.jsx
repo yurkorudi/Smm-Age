@@ -203,7 +203,7 @@ export default function AdminPanel() {
       try {
         setLoading(true);
         
-        // Отримуємо дані для карток
+
         const statsResponse = await fetch('http://localhost:5000/api/dashboard-stats', {
           credentials: 'include'
         });
@@ -211,7 +211,7 @@ export default function AdminPanel() {
         const statsData = await statsResponse.json();
         setCards(statsData);
 
-        // Отримуємо ім'я користувача (приклад)
+
         const userResponse = await fetch('http://localhost:5000/api/user-info', {
           credentials: 'include'
         });
