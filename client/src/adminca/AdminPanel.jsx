@@ -13,6 +13,9 @@ import {
   Select,
   MenuItem,
   Toolbar,
+  CircularProgress,
+  Snackbar,
+  Alert
 } from '@mui/material';
 import {
   Home as HomeIcon,
@@ -26,31 +29,41 @@ import {
 } from '@mui/icons-material';
 import { BarChart } from '@mui/x-charts/BarChart';
 
-// Константи
 const SIDEBAR_WIDTH = 240;
 const sidebarGradient = 'linear-gradient(180deg, #074177 1%, #07001C 14%)';
 const mainGradient = 'linear-gradient(180deg, #074177 10%, #000000 100%)';
 const diagramGradient = 'linear-gradient(180deg, #074177 1%, #000000 50%)';
-
-// Місяці на осі X
 const months = ['Січ', 'Лют', 'Бер', 'Квіт', 'Трав', 'Чер', 'Лип', 'Серп', 'Вер', 'Жовт', 'Лист', 'Груд'];
 
 function VisitorsChart() {
-  const [year, setYear] = useState(2025);
+  const [year, setYear] = useState(new Date().getFullYear());
   const [visitorsData, setVisitorsData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // TODO: Замість статичних даних зробити API-запит для отримання кількості відвідувачів за обраний рік
-    // fetch(`/api/visitors?year=${year}`)
-    //   .then(res => res.json())
-    //   .then(data => setVisitorsData(data))
-    //   .catch(err => console.error(err));
-    setVisitorsData([35, 63, 72, 75, 45, 85, 72, 20, 60, 80, 25, 55]); // тимчасові дані
+    const fetchVisitorsData = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`http://localhost:5000/api/visitors?year=${year}`, {
+          credentials: 'include'
+        });
+        if (!response.ok) throw new Error('Network response was not ok');
+        const data = await response.json();
+        setVisitorsData(data);
+      } catch (err) {
+        setError(err.message);
+        console.error('Error fetching visitors data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVisitorsData();
   }, [year]);
 
   return (
     <Box>
-      {/* Заголовок з вибором року */}
       <Box sx={{ display: 'flex', color: 'white', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h6" sx={{ fontWeight: 600 }}>
           Кількість відвідувачів ({year})
@@ -67,49 +80,49 @@ function VisitorsChart() {
             fontSize: '1rem',
           }}
         >
-          <MenuItem value={2025}>2025</MenuItem>
-          <MenuItem value={2024}>2024</MenuItem>
+          <MenuItem value={new Date().getFullYear()}>{new Date().getFullYear()}</MenuItem>
+          <MenuItem value={new Date().getFullYear() - 1}>{new Date().getFullYear() - 1}</MenuItem>
         </Select>
       </Box>
 
-     <BarChart
-  height={300}
-  series={[{ data: visitorsData, label: 'Відвідувачі', color: '#074177' }]}
-  xAxis={[{ data: months, scaleType: 'band', tickLabelStyle: { fill: '#fff' } }]}
-  yAxis={[{ tickLabelStyle: { fill: '#fff' } }]}
-  slotProps={{
-    legend: {
-      sx: {
-        color: '#fff',
-        fontSize: '1rem',
-      },
-    },
-  }}
-  sx={{
-    '& .MuiBar-root': { borderRadius: 4 },
-    '& .MuiChartsAxis-line': { stroke: '#3a4a7a' },
-  }}
-/>
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
+          <CircularProgress />
+        </Box>
+      ) : error ? (
+        <Typography color="error">{error}</Typography>
+      ) : (
+        <BarChart
+          height={300}
+          series={[{ data: visitorsData, label: 'Відвідувачі', color: '#074177' }]}
+          xAxis={[{ data: months, scaleType: 'band', tickLabelStyle: { fill: '#fff' } }]}
+          yAxis={[{ tickLabelStyle: { fill: '#fff' } }]}
+          slotProps={{
+            legend: {
+              sx: {
+                color: '#fff',
+                fontSize: '1rem',
+              },
+            },
+          }}
+          sx={{
+            '& .MuiBar-root': { borderRadius: 4 },
+            '& .MuiChartsAxis-line': { stroke: '#3a4a7a' },
+          }}
+        />
+      )}
     </Box>
   );
 }
 
 function Sidebar() {
-  const [menuItems, _setMenuItems] = useState([
+  const [menuItems] = useState([
     { text: 'Dashboard', icon: <HomeIcon />, active: false },
     { text: 'Аналітика', icon: <BarChartIcon />, active: true },
     { text: 'Джерела трафіку', icon: <TrafficIcon />, active: false },
     { text: 'Звіти', icon: <DescriptionIcon />, active: false },
     { text: 'Інтеграції', icon: <DescriptionIcon />, active: false },
   ]);
-
-  useEffect(() => {
-    // TODO: Підтягувати список меню з бекенду
-    // fetch('/api/menu')
-    //   .then(res => res.json())
-    //   .then(data => _setMenuItems(data))
-    //   .catch(err => console.error(err));
-  }, []);
 
   const bottomItems = [
     { text: 'Налаштування', icon: <SettingsIcon />, route: '/settings' },
@@ -139,18 +152,39 @@ function Sidebar() {
       </Toolbar>
       <List dense>
         {menuItems.map(({ text, icon, active }) => (
-          <ListItem key={text} button sx={{ py: 1, mb: 1, borderRadius: 1, bgcolor: active ? 'rgba(255,255,255,0.1)' : 'transparent' }}>
+          <ListItem 
+            key={text} 
+            button 
+            sx={{ 
+              py: 1, 
+              mb: 1, 
+              borderRadius: 1, 
+              bgcolor: active ? 'rgba(255,255,255,0.1)' : 'transparent' 
+            }}
+          >
             <ListItemIcon sx={{ minWidth: 32, color: '#cbd2ff' }}>{icon}</ListItemIcon>
-            <ListItemText primary={text} primaryTypographyProps={{ variant: 'body2', color: '#cbd2ff' }} />
+            <ListItemText 
+              primary={text} 
+              primaryTypographyProps={{ variant: 'body2', color: '#cbd2ff' }} 
+            />
           </ListItem>
         ))}
       </List>
       <Box sx={{ flexGrow: 1 }} />
       <List dense sx={{ pb: 2 }}>
         {bottomItems.map(({ text, icon, route }) => (
-          <ListItem key={text} button component={Link} to={route} sx={{ py: 1, mb: 1, borderRadius: 1 }}>
+          <ListItem 
+            key={text} 
+            button 
+            component={Link} 
+            to={route} 
+            sx={{ py: 1, mb: 1, borderRadius: 1 }}
+          >
             <ListItemIcon sx={{ minWidth: 32, color: '#6b6b7b' }}>{icon}</ListItemIcon>
-            <ListItemText primary={text} primaryTypographyProps={{ variant: 'body2', color: '#6b6b7b' }} />
+            <ListItemText 
+              primary={text} 
+              primaryTypographyProps={{ variant: 'body2', color: '#6b6b7b' }} 
+            />
           </ListItem>
         ))}
       </List>
@@ -160,52 +194,86 @@ function Sidebar() {
 
 export default function AdminPanel() {
   const [cards, setCards] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [username, setUsername] = useState('Адміністратор');
 
   useEffect(() => {
-    // TODO: Завантажити показники для карток через API
-    // fetch('/api/dashboard-stats')...
-    setCards([
-      { title: 'Кількість заявок форми', value: '15', change: '0 – 35.74%', gradient: true },
-      { title: 'Середня тривалість сесії', value: '5,38 хв', change: '0 – 10.74%', gradient: false },
-      { title: 'Показник відмов', value: '1', change: '0 – 10.74%', gradient: false },
-    ]);
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        // Отримуємо дані для карток
+        const statsResponse = await fetch('http://localhost:5000/api/dashboard-stats', {
+          credentials: 'include'
+        });
+        if (!statsResponse.ok) throw new Error('Failed to fetch stats');
+        const statsData = await statsResponse.json();
+        setCards(statsData);
+
+        // Отримуємо ім'я користувача (приклад)
+        const userResponse = await fetch('http://localhost:5000/api/user-info', {
+          credentials: 'include'
+        });
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          setUsername(userData.username || 'Адміністратор');
+        }
+
+      } catch (err) {
+        setError(err.message);
+        console.error('Error fetching data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: '#000' }}>
       <Sidebar />
       <Box component="main" sx={{ flexGrow: 1 }}>
-        {/* Хедер: тут можна підтягути дані для банера */}
         <Box sx={{ height: 200, background: mainGradient }} />
-        {/* Контент */}
         <Box sx={{ p: 3 }}>
           <Typography variant="h5" sx={{ color: '#fff', fontWeight: 500, mb: 3 }}>
-            Привіт, адміністратор! {/* TODO: замінити на динамічне ім'я користувача */}
+            Привіт, {username}!
           </Typography>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-            {cards.map(({ title, value, change, gradient }) => (
-              <Card
-                key={title}
-                sx={{
-                  flex: '1 1 calc(33% - 1rem)',
-                  minWidth: 250,
-                  borderRadius: 2,
-                  p: 2,
-                  background: gradient ? mainGradient : '#07001C',
-                  border: '1px solid #3a4a7a',
-                }}
-              >
-                <CardContent>
-                  <Typography variant="subtitle2" sx={{ color: '#cbd2ff' }}>{title}</Typography>
-                  <Typography variant="h4" sx={{ color: '#fff', fontWeight: 700, my: 1 }}>{value}</Typography>
-                  <Typography variant="body2" sx={{ color: '#cbd2ff' }}>{change}</Typography>
-                </CardContent>
-              </Card>
-            ))}
-          </Box>
+          
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 200 }}>
+              <CircularProgress />
+            </Box>
+          ) : error ? (
+            <Typography color="error" sx={{ mb: 3 }}>
+              Помилка завантаження даних: {error}
+            </Typography>
+          ) : (
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+              {cards.map(({ title, value, change, gradient }) => (
+                <Card
+                  key={title}
+                  sx={{
+                    flex: '1 1 calc(33% - 1rem)',
+                    minWidth: 250,
+                    borderRadius: 2,
+                    p: 2,
+                    background: gradient ? mainGradient : '#07001C',
+                    border: '1px solid #3a4a7a',
+                  }}
+                >
+                  <CardContent>
+                    <Typography variant="subtitle2" sx={{ color: '#cbd2ff' }}>{title}</Typography>
+                    <Typography variant="h4" sx={{ color: '#fff', fontWeight: 700, my: 1 }}>{value}</Typography>
+                    <Typography variant="body2" sx={{ color: '#cbd2ff' }}>{change}</Typography>
+                  </CardContent>
+                </Card>
+              ))}
+            </Box>
+          )}
 
-          {/* Застосовано градієнт фону для блоку діаграми */}
-          <Box sx={{ mt: 4, p: 3, borderRadius: 2, background:diagramGradient, color: '#A9A9A9' }}>
+          <Box sx={{ mt: 4, p: 3, borderRadius: 2, background: diagramGradient }}>
             <VisitorsChart />
           </Box>
         </Box>
